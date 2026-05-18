@@ -274,6 +274,43 @@ All defaults work out of the box for local development. Configure via environmen
 
 ---
 
+## Screenshots
+
+### Login Page
+> Space-themed neural network animation with the TutorGPT logo — the first thing users see.
+
+![Login Page](screenshots/home.jpg)
+
+---
+
+### Dashboard
+> At-a-glance stats for courses, documents, and quizzes taken. Quick access to all features.
+
+![Dashboard](screenshots/dashboard.png)
+
+---
+
+### AI Chat
+> Ask questions about your uploaded documents. Every answer is sourced directly from your content with citations.
+
+![AI Chat](screenshots/aichat.png)
+
+---
+
+### AI Quiz
+> Auto-generated multiple-choice quiz with instant feedback — correct answers highlighted green, wrong ones red, with explanations.
+
+![AI Quiz](screenshots/quiz.jpg)
+
+---
+
+### Flashcards
+> AI-generated flashcard deck with flip animation, progress tracking, and "Got it / Still learning" flow.
+
+![Flashcards](screenshots/flashcard.jpg)
+
+---
+
 ## Built With
 
 - [Groq](https://groq.com) — Ultra-fast LLM inference (free tier, no credit card)
