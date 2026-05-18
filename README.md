@@ -6,6 +6,16 @@ TutorGPT is a full-stack AI tutoring web application that lets students upload c
 
 ---
 
+## Key Engineering Highlights
+
+- Built a microservice-based AI tutoring platform using **React 19, Spring Boot, FastAPI, ChromaDB, and Groq LLM**
+- Implemented **JWT authentication**, protected routes, async document ingestion, RAG-based chat, quiz generation, flashcards, and AI summaries
+- Designed a **modular monorepo architecture** with separate frontend, backend, and AI service layers
+- Space-themed UI with a **live HTML5 Canvas neural network animation** rendered across all pages
+- Document pipeline supports **PDF, DOCX, and PPTX** — chunked, embedded, and stored in ChromaDB for vector retrieval
+
+---
+
 ## Features
 
 | Feature | Description |
@@ -25,10 +35,10 @@ TutorGPT is a full-stack AI tutoring web application that lets students upload c
 ### Frontend
 | Technology | Role |
 |---|---|
-| React 18 + Vite + TypeScript | UI framework and build tool |
+| React 19 + Vite + TypeScript | UI framework and build tool |
 | TailwindCSS v4 | Utility-first styling with `@theme` token remapping |
 | shadcn/ui | Accessible component primitives |
-| React Router v6 | Client-side routing with protected routes |
+| React Router v7 | Client-side routing with protected routes |
 | TanStack Query (React Query) | Server state, caching, mutations |
 | Zustand | Auth state + localStorage persistence |
 | Axios | HTTP client with JWT interceptor |
@@ -49,17 +59,18 @@ TutorGPT is a full-stack AI tutoring web application that lets students upload c
 |---|---|
 | Python FastAPI | AI microservice API |
 | ChromaDB (embedded) | Vector store for document embeddings |
-| ONNX all-MiniLM-L6-v2 | Local sentence embeddings (no API key needed) |
-| LangChain `RecursiveCharacterTextSplitter` | Document chunking |
+| LangChain | Document chunking + Groq LLM integration |
 | Groq API — Llama 3.3 70B | LLM inference (free tier) |
-| PyMuPDF / python-docx | PDF and DOCX parsing |
+| PyPDF2 | PDF parsing |
+| python-docx | DOCX parsing |
+| python-pptx | PPTX parsing |
 
 ---
 
 ## Architecture & Workflow
 
 ```
-Browser (React)
+Browser (React 19)
       │
       │  REST + JWT
       ▼
@@ -82,9 +93,9 @@ Spring Boot (port 8080)
 
 1. **Sign up / Log in** — Spring Boot issues a JWT stored in `localStorage`
 2. **Create a course** — logical container for documents and study tools
-3. **Upload a document** — PDF or DOCX is saved to disk, then asynchronously chunked and embedded into ChromaDB by the AI service
-4. **Chat** — user asks a question → Spring Boot forwards to FastAPI → ChromaDB retrieves the top-k relevant chunks → Groq LLM generates a grounded answer with source citations → displayed in the chat panel
-5. **Generate a quiz** — the document's chunks are sent to Groq with a structured prompt → 10 MCQ questions with options and explanations are returned and stored in H2
+3. **Upload a document** — PDF, DOCX, or PPTX saved to disk, then asynchronously chunked and embedded into ChromaDB
+4. **Chat** — question → Spring Boot → FastAPI → ChromaDB retrieves top-k chunks → Groq generates grounded answer with citations
+5. **Generate a quiz** — document chunks sent to Groq → 10 MCQ questions with options and explanations stored in H2
 6. **Generate flashcards** — same flow produces term/definition pairs stored as a deck in H2
 7. **Summarize** — document chunks sent to Groq for a structured summary, stored per-document and shown inline
 
@@ -99,11 +110,11 @@ Spring Boot saves file to disk
    ▼  (@Async — non-blocking)
 POST /ingest → FastAPI
    │
-   ├─ Parse (PDF → PyMuPDF, DOCX → python-docx)
-   ├─ Chunk (RecursiveCharacterTextSplitter, 800 chars / 150 overlap)
-   ├─ Embed (ONNX all-MiniLM-L6-v2, runs locally)
+   ├─ Parse (PDF → PyPDF2, DOCX → python-docx, PPTX → python-pptx)
+   ├─ Chunk (LangChain RecursiveCharacterTextSplitter, 800 chars / 150 overlap)
+   ├─ Embed (ChromaDB default embedding function)
    └─ Store in ChromaDB (collection per document)
-   
+
 Document status: PROCESSING → READY
 ```
 
@@ -150,7 +161,7 @@ tutorgpt/
 ### Prerequisites
 - Node.js 18+
 - Java 17+
-- Python 3.11 (not 3.12+ — required for ONNX/numpy compatibility)
+- Python 3.11 (recommended for ChromaDB/LangChain compatibility)
 - A free [Groq API key](https://console.groq.com)
 
 ### 1. AI Service
@@ -203,7 +214,7 @@ Open **http://localhost:3000**
 | POST | `/api/auth/login` | Login, returns JWT |
 | GET/POST | `/api/courses` | List / create courses |
 | DELETE | `/api/courses/:id` | Delete course |
-| POST | `/api/courses/:id/documents` | Upload document |
+| POST | `/api/courses/:id/documents` | Upload document (PDF/DOCX/PPTX) |
 | DELETE | `/api/documents/:id` | Delete document |
 | POST | `/api/courses/:id/chat` | RAG chat |
 | POST | `/api/courses/:id/quiz` | Generate quiz |
@@ -247,16 +258,19 @@ flashcards      id, deck_id, position, front, back
 GROQ_API_KEY=your_key_here
 ```
 
-### `backend/src/main/resources/application.properties`
-All defaults work out of the box for local development. H2 console available at `http://localhost:8080/h2-console`.
+### Backend (`application.yml`)
+All defaults work out of the box for local development. Configure via environment variables for production:
 
----
+| Variable | Description |
+|---|---|
+| `AI_SERVICE_URL` | URL of the FastAPI AI service (default: `http://localhost:8000`) |
+| `JWT_SECRET` | Secret key for signing JWTs |
+| `UPLOAD_DIR` | Directory for uploaded files (default: `./uploads`) |
 
-## Screenshots
-
-| Login | Dashboard | Course Chat |
-|---|---|---|
-| Space neural network background with logo | Stats, feature cards, account info | Two-column: doc sidebar + RAG chat |
+### Frontend
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | Backend URL for production (leave empty for local dev) |
 
 ---
 
@@ -264,6 +278,6 @@ All defaults work out of the box for local development. H2 console available at 
 
 - [Groq](https://groq.com) — Ultra-fast LLM inference (free tier, no credit card)
 - [ChromaDB](https://www.trychroma.com) — Embedded vector database
+- [LangChain](https://langchain.com) — LLM framework and document processing
 - [Spring Boot](https://spring.io/projects/spring-boot) — Java backend framework
 - [Vite](https://vitejs.dev) — Frontend build tool
-
