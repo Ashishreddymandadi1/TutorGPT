@@ -267,8 +267,3 @@ All defaults work out of the box for local development. H2 console available at 
 - [Spring Boot](https://spring.io/projects/spring-boot) — Java backend framework
 - [Vite](https://vitejs.dev) — Frontend build tool
 
----
-
-## License
-
-MIT
